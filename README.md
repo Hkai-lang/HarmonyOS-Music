@@ -12,6 +12,7 @@
 ### API服务
 本项目使用以下音乐API服务：
 https://music.cenguigui.cn
+使用该API可点击链接联系API客服咨询
 
 
 
