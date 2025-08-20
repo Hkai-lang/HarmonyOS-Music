@@ -1,0 +1,35 @@
+{
+  "routerMap": [
+    {
+      "name":"Index",
+      "pageSourceFile": "src/main/ets/pages/Index.ets",
+      "buildFunction": "IndexBuilder"
+    },{
+      "name":"Main",
+      "pageSourceFile": "src/main/ets/pages/MainPage.ets",
+      "buildFunction": "MainPageBuilder"
+    },
+    {
+      "name": "songListPage",
+      "pageSourceFile": "src/main/ets/pages/songListPage.ets",
+      "buildFunction": "songListBuilder"
+    }, {
+      "name": "songPlayingPage",
+      "pageSourceFile": "src/main/ets/pages/SongPlayingPage.ets",
+      "buildFunction": "songPLayingBuilder"
+    },{
+      "name": "geDanPage",
+      "pageSourceFile" : "src/main/ets/pages/GeDanPage.ets",
+      "buildFunction": "GeDanPageBuilder"
+    },{
+      "name": "songListPage2",
+      "pageSourceFile" : "src/main/ets/pages/songListPage2.ets",
+      "buildFunction": "songListPage2Builder"
+    },{
+      "name": "SearchPage",
+      "pageSourceFile" : "src/main/ets/pages/SearchPage.ets",
+      "buildFunction": "SearchPageBuilder"
+    }
+
+  ]
+}

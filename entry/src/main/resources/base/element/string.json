@@ -11,6 +11,17 @@
     {
       "name": "EntryAbility_label",
       "value": "label"
+    },{
+      "name": "internet_permission_reason",
+      "value": "需要访问网络以下载图片"
+    },
+    {
+      "name": "read_media_permission_reason",
+      "value": "需要读取下载的图片文件"
+    },
+    {
+      "name": "write_media_permission_reason",
+      "value": "需要保存下载的图片文件"
     }
   ]
 }
