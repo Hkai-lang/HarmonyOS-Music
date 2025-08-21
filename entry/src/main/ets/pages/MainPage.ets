@@ -375,6 +375,7 @@ struct MainPage {
           // selectedIndex控制自定义TabBar内Image和Text颜色切换
           this.selectedIndex = targetIndex
         })
+        .scrollable(false)
 
 
         Row() {

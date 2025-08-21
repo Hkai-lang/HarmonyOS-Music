@@ -1,6 +1,12 @@
 import { songBean } from "../bean/songBean";
 import { HttpUtils } from "../utils/HttpUtils";
 import { SharePreferenceUtil } from "../utils/SharePreferenceUtil";
+import hilog from "@ohos.hilog";
+import { CommonUtils } from "../utils/CommonUtils";
+import { getInternetImgColor } from "../utils/ImageUtils";
+import { SongUtils } from "../utils/SongUtils";
+import { AVPlayerUtils } from "../utils/AVPlayerUtils";
+import { EventContanst } from "../utils/EventContanst";
 
 @Component
 export struct SearchPage {
@@ -13,14 +19,22 @@ export struct SearchPage {
   @State line: number = 0
   @State isSearch: boolean = false //是否显示联想搜索标识
   @State searchList: songBean[] = []
+  @State searchFinalList: songBean[] = []
   @State searchHistory: string[] = []
   @State gusFavList: string[] = ['跳楼机', '猜', '离开我的依赖', '红尘客栈', '大风吹', '程艾影'] //猜你喜欢
   @State bangDan: Array<string[]> = [
-    ['恋人', '夏夜最后的烟火', '褪黑素', '我们的明天', '离开我的依赖', '空心', '唯一','TWICE','最渣男主角','其实','可乐','成都'],
-    ['褪黑素', '离开我的依赖', '两 难', '寂寞寂寞不好', '爱情讯息', '于是', '唯一','恋人','罗生门','爱错','零距离的思念','我怀念的'],
-    ['NIGHTKIDZ夜之子', '最渣男主角', '孔雀', 'NOT GOOD', 'Lost', '我发誓我要美丽', '猜','失控','离开我的依赖','开始懂了','你啊你，我的心','恋人'],
-    ['褪黑素', '一半晚安', '褪黑素2.0', '大城小爱', '暗流', '萤火星球', 'Jasmine','安和桥','你','我们俩','猜不透','他不懂']]
+    ['恋人', '夏夜最后的烟火', '褪黑素', '我们的明天', '离开我的依赖', '空心', '唯一', 'TWICE', '最渣男主角', '其实',
+      '可乐', '成都'],
+    ['褪黑素', '离开我的依赖', '两 难', '寂寞寂寞不好', '爱情讯息', '于是', '唯一', '恋人', '罗生门', '爱错',
+      '零距离的思念', '我怀念的'],
+    ['NIGHTKIDZ夜之子', '最渣男主角', '孔雀', 'NOT GOOD', 'Lost', '我发誓我要美丽', '猜', '失控', '离开我的依赖',
+      '开始懂了', '你啊你，我的心', '恋人'],
+    ['褪黑素', '一半晚安', '褪黑素2.0', '大城小爱', '暗流', '萤火星球', 'Jasmine', '安和桥', '你', '我们俩', '猜不透',
+      '他不懂']]
   @StorageLink('likeList') likeList: songBean[] = []
+  @State isGoToResult: boolean = false
+  @State count: number = 0 //标记是否是第一次进入
+  @State isVis: Visibility = Visibility.None
 
   aboutToAppear(): void {
     this.searchTxArray = SharePreferenceUtil.getInstance().getArrayString('searchTxArray')
@@ -41,14 +55,42 @@ export struct SearchPage {
             }
           }
           this.searchList = this.searchList.slice(0, 9)
-          this.isSearch = true
-          this.searchHistory.push(this.searchText)
         } else {
-          this.isSearch = false
+
+        }
+      })
+  }
+
+  goToResult(isLianXiang?: boolean, song?: songBean) {
+    this.controller.stopEditing()
+    let searchFinalText = isLianXiang ? song?.name : this.searchText
+    HttpUtils.httpGetSong(`https://music.cenguigui.cn/?server=netease&type=search&id=${searchFinalText}`)
+      .then((res) => {
+        if (res) {
+          let data: songBean[] = JSON.parse(res) || new Object()
+          for (let i = 0; i < data.length; i++) {
+            if (isLianXiang) {
+              if (data[i].name.startsWith(song!.name) && data[i].artist.startsWith(song!.artist)) {
+                this.searchList.push(data[i])
+              }
+            } else {
+              if (data[i].name.startsWith(this.searchText) || data[i].artist.startsWith(this.searchText)) {
+                this.searchList.push(data[i])
+              }
+            }
+
+          }
+          this.searchFinalList = this.searchList
+          this.searchList = this.searchList.slice(0, 9)
+          this.searchHistory.push(this.searchText)
+
+
         }
 
-
+        this.isGoToResult = true
+        this.isSearch = false
       })
+
   }
 
   build() {
@@ -61,8 +103,8 @@ export struct SearchPage {
             .margin({ left: 10 })
             .draggable(false)
             .onClick(() => {
-              this.pageInfo.pop()
               AppStorage.setOrCreate('isSongList', false)
+              this.pageInfo.pop()
             })
 
 
@@ -75,20 +117,43 @@ export struct SearchPage {
 
             TextInput({ text: this.searchText!!, placeholder: '输入歌曲名或歌手', controller: this.controller })
               .backgroundColor('#FEFEFF')
-              .width('70%')
+              .width(0)
+              .layoutWeight(1)
               .defaultFocus(true)
               .onChange((data) => {
                 if (this.searchText == '') {
                   this.isSearch = false
+                  this.isGoToResult = false
+                  this.isVis = Visibility.None
                 } else {
                   this.searchList = []
                   this.searchSong()
+                  this.isSearch = true
+                  this.isGoToResult = false
+                  this.isVis = Visibility.Visible
                 }
-
               })
               .onSubmit((callBack) => {
-                this.searchSong()
+                this.goToResult()
               })
+              .onFocus(() => {
+                if (this.count !== 0) {
+                  this.isGoToResult = false
+                  this.isSearch = true
+                  this.searchList = []
+                  this.searchSong()
+                }
+                this.count++
+              })
+
+            Text('×')
+              .visibility(this.isVis)
+              .fontSize(18)
+              .margin({ right: 10 })
+              .onClick(() => {
+                this.searchText = ''
+              })
+              .align(Alignment.End)
 
 
           }.width('73%')
@@ -105,8 +170,12 @@ export struct SearchPage {
                 AppStorage.set('searchTxArray', this.searchTxArray)
                 SharePreferenceUtil.getInstance().putArrayString('searchTxArray', this.searchTxArray)
               }
-              this.searchSong()
 
+              if (this.searchText == '') {
+                CommonUtils.toastShow('搜索不可为空哦～')
+              } else {
+                this.goToResult()
+              }
             })
 
 
@@ -114,51 +183,74 @@ export struct SearchPage {
         .margin({ top: 50 })
 
         //默认搜索页面
-        Column() {
-          //搜索历史
+        Scroll() {
           Column() {
-            Row() {
-              Text('搜索历史').fontWeight(FontWeight.Bold).fontSize(16)
-                .width(0)
-                .layoutWeight(1)
-              Image($rawfile('shanchu.png'))
-                .width(25)
-                .height(25)
-                .onClick(() => {
-                  if (this.isDelete) {
-                    this.isDelete = false
-                  } else {
-                    this.isDelete = true
-                  }
+            //搜索历史
+            Column() {
+              Row() {
+                Text('搜索历史').fontWeight(FontWeight.Bold).fontSize(16)
+                  .width(0)
+                  .layoutWeight(1)
+                Image($rawfile('shanchu.png'))
+                  .width(25)
+                  .height(25)
+                  .onClick(() => {
+                    if (this.isDelete) {
+                      this.isDelete = false
+                    } else {
+                      this.isDelete = true
+                    }
 
-                  if (!this.isEx) {
-                    this.isEx = true
-                  }
+                    if (!this.isEx) {
+                      this.isEx = true
+                    }
 
-                })
-            }
+                  })
+              }
 
-            Row() {
-              Flex({ wrap: FlexWrap.Wrap, direction: FlexDirection.Row }) {
-                ForEach(this.searchTxArray, (data: string, index: number) => {
-                  Text(this.isDelete ? data + ' ×' : data)
-                    .borderRadius(30)
-                    .textOverflow({ overflow: TextOverflow.Ellipsis })
-                    .fontSize(14)
+              Row() {
+                Flex({ wrap: FlexWrap.Wrap, direction: FlexDirection.Row }) {
+                  ForEach(this.searchTxArray, (data: string, index: number) => {
+                    Text(this.isDelete ? data + ' ×' : data)
+                      .borderRadius(30)
+                      .textOverflow({ overflow: TextOverflow.Ellipsis })
+                      .fontSize(14)
+                      .margin(5)
+                      .padding(5)
+                      .backgroundColor('#FEFEFF')
+                      .onClick(() => {
+                        if (this.isDelete) {
+                          this.searchTxArray.splice(index, 1)
+                          SharePreferenceUtil.getInstance().putArrayString('searchTxArray', this.searchTxArray)
+                        } else {
+                          this.searchText = data
+                          this.goToResult()
+                        }
+                      })
+                  })
+
+                  Image($rawfile('up_black.png'))
+                    .width(25)
+                    .height(25)
                     .margin(5)
                     .padding(5)
+                    .borderRadius(30)
                     .backgroundColor('#FEFEFF')
                     .onClick(() => {
-                      if (this.isDelete) {
-                        this.searchTxArray.splice(index, 1)
-                        SharePreferenceUtil.getInstance().putArrayString('searchTxArray', this.searchTxArray)
-                      } else {
-                        this.searchText = data
-                      }
+                      this.isEx = false
                     })
+                    .visibility(this.isEx && this.searchTxArray.length > 3 ? Visibility.Visible : Visibility.None)
+
+                }.width(this.isEx ? '100%' : '90%')
+                .height(this.isEx ? 'auto' : 36)
+                .clip(true)
+                .onAreaChange((oldValue, newValue) => {
+                  const itemHeight = 36
+                  const finalHei: number = parseInt(newValue.height.toString(), 10);
+                  this.line = Math.ceil(finalHei / itemHeight)
                 })
 
-                Image($rawfile('up_black.png'))
+                Image($rawfile('down_black.png'))
                   .width(25)
                   .height(25)
                   .margin(5)
@@ -166,87 +258,74 @@ export struct SearchPage {
                   .borderRadius(30)
                   .backgroundColor('#FEFEFF')
                   .onClick(() => {
-                    this.isEx = false
+                    this.isEx = true
                   })
-                  .visibility(this.isEx && this.searchTxArray.length > 3 ? Visibility.Visible : Visibility.None)
+                  .visibility(!this.isEx && this.searchTxArray.length > 3 ? Visibility.Visible : Visibility.None)
 
-              }.width(this.isEx ? '100%' : '90%')
-              .height(this.isEx ? 'auto' : 36)
-              .clip(true)
-              .onAreaChange((oldValue, newValue) => {
-                const itemHeight = 36
-                const finalHei: number = parseInt(newValue.height.toString(), 10);
-                this.line = Math.ceil(finalHei / itemHeight)
-              })
+              }.width('100%')
+              .margin({ top: 10 })
 
-              Image($rawfile('down_black.png'))
-                .width(25)
-                .height(25)
-                .margin(5)
-                .padding(5)
-                .borderRadius(30)
-                .backgroundColor('#FEFEFF')
-                .onClick(() => {
-                  this.isEx = true
+            }.margin({ top: 20 })
+            .width('90%')
+            .visibility(this.searchTxArray.length == 0 ? Visibility.None : Visibility.Visible)
+
+            //猜你喜欢
+            Column() {
+              Text('猜你喜欢').fontWeight(FontWeight.Bold).fontSize(16)
+                .alignSelf(ItemAlign.Start)
+
+              Grid() {
+                ForEach(this.gusFavList, (txt: string, index: number) => {
+                  GridItem() {
+                    Text(txt).fontSize(15)
+                      .onClick(() => {
+                        this.searchText = txt
+                        this.goToResult()
+                      })
+
+                  }.align(Alignment.Start)
                 })
-                .visibility(!this.isEx && this.searchTxArray.length > 3 ? Visibility.Visible : Visibility.None)
+              }
+              .columnsTemplate('1fr 1fr ')
+              .rowsTemplate('1fr 1fr 1fr')
+              .width('100%')
+              .height(100)
+              .margin({ top: 10 })
 
-            }.width('100%')
-            .margin({ top: 10 })
+            }.margin({ top: 20 })
+            .width('90%')
 
-          }.margin({ top: 20 })
-          .width('90%')
-          .visibility(this.searchTxArray.length == 0 ? Visibility.None : Visibility.Visible)
 
-          //猜你喜欢
-          Column() {
-            Text('猜你喜欢').fontWeight(FontWeight.Bold).fontSize(16)
-              .alignSelf(ItemAlign.Start)
+            //热搜榜
+            List() {
+              ForEach(this.bangDan, (array: string[], index: number) => {
+                ListItem() {
+                  if (index === 0) {
+                    this.bangDanItem(array, '热搜榜')
+                  } else if (index === 1) {
+                    this.bangDanItem(array, '热歌榜')
+                  } else if (index === 2) {
+                    this.bangDanItem(array, '飙升榜')
+                  } else if (index === 3) {
+                    this.bangDanItem(array, '新歌榜')
+                  }
+                }.borderRadius(5)
+                .backgroundColor('#FEFEFF')
+                .margin({ left: 15 })
+                .width('65%')
 
-            Grid() {
-              ForEach(this.gusFavList, (txt: string, index: number) => {
-                GridItem() {
-                  Text(txt).fontSize(15)
-
-                }.align(Alignment.Start)
               })
-            }
-            .columnsTemplate('1fr 1fr ')
-            .rowsTemplate('1fr 1fr 1fr')
+
+            }.listDirection(Axis.Horizontal)
             .width('100%')
-            .height(100)
-            .margin({ top: 10 })
+            .margin({ top: 20 })
 
-          }.margin({ top: 20 })
-          .width('90%')
-
-
-          //热搜榜
-          List() {
-            ForEach(this.bangDan, (array: string[], index: number) => {
-              ListItem() {
-                if (index === 0) {
-                  this.bangDanItem(array, '热搜榜')
-                } else if (index === 1) {
-                  this.bangDanItem(array, '热歌榜')
-                } else if (index === 2) {
-                  this.bangDanItem(array, '飙升榜')
-                } else if (index === 3) {
-                  this.bangDanItem(array, '新歌榜')
-                }
-              }.borderRadius(5)
-              .backgroundColor('#FEFEFF')
-              .margin({ left: 15 })
-              .width('65%')
-
-            })
-
-          }.listDirection(Axis.Horizontal)
-          .width('100%')
-          .margin({top:20})
+          }.width('100%')
 
         }.width('100%')
-        .visibility(this.isSearch ? Visibility.None : Visibility.Visible)
+        .margin({ bottom: 75 })
+        .visibility(this.isSearch ? Visibility.None : (this.isGoToResult ? Visibility.None : Visibility.Visible))
+        .scrollBar(BarState.Off)
 
         //联想搜索结果
         Column() {
@@ -270,7 +349,23 @@ export struct SearchPage {
 
         }.margin({ top: 20 })
         .width('90%')
-        .visibility(this.isSearch ? Visibility.Visible : Visibility.None)
+        .visibility(this.isSearch && !this.isGoToResult ? Visibility.Visible : Visibility.None)
+
+
+        //搜索结果页面
+        List({ space: 10 }) {
+          ForEach(this.searchFinalList, (item: songBean, index ?: number) => {
+            ListItem() {
+              this.songItem(item)
+            }
+
+          })
+
+
+        }.margin({ top: 20, bottom: 165 })
+        .width('90%')
+        .visibility(this.isGoToResult ? Visibility.Visible : Visibility.None)
+        .scrollBar(BarState.Off)
 
       }.width('100%')
       .height('100%')
@@ -283,6 +378,7 @@ export struct SearchPage {
 
   }
 
+  //联想搜索Item
   @Builder
   searchItem(isHis: boolean, song?: songBean, isFav?: boolean) {
     Row() {
@@ -310,9 +406,18 @@ export struct SearchPage {
 
       }
 
-    }
+    }.onClick(() => {
+      if (isHis) {
+        this.goToResult()
+      } else {
+        let txt: string = `${song!.name} ${song!.artist}`
+        this.searchText = txt
+        this.goToResult(true, song)
+      }
+    })
   }
 
+  //榜单Item
   @Builder
   bangDanItem(array: string[], title: string) {
     Column() {
@@ -327,27 +432,102 @@ export struct SearchPage {
       Column({ space: 10 }) {
         ForEach(array, (data: string, index: number) => {
           Row() {
-            Text((index + 1).toString()).fontSize(15)
+            Text((index + 1).toString())
+              .fontSize(15)
               .fontColor((index + 1) < 4 ? '#FE3C3B' : Color.Black)
               .fontWeight(FontWeight.Bolder)
-              .width(20).height(20)
+              .width(20)
+              .height(20)
 
             Text(data).margin({ left: 5 }).width(0).layoutWeight(1)
 
             if ((index + 1) < 4) {
-              Text('爆').width(15).height(15).backgroundColor('#FD393A')
-                .fontColor('#FEFFFF').fontSize(12)
+              Text('爆')
+                .width(15)
+                .height(15)
+                .backgroundColor('#FD393A')
+                .fontColor('#FEFFFF')
+                .fontSize(12)
                 .borderRadius(3)
                 .textAlign(TextAlign.Center)
             }
 
 
           }.width('100%')
+          .onClick(() => {
+            this.searchText = data
+            this.goToResult()
+          })
         })
       }.margin({ top: 10 })
 
     }.width('90%')
-    .margin({ top: 10 })
+    .margin({ top: 10, bottom: 10 })
+  }
+
+  //搜索结果Item
+  @Builder
+  songItem(songInfo: songBean) {
+    Row() {
+      Image(songInfo.pic)
+        .width(55)
+        .height(55)
+        .borderRadius(4)
+
+      Column({ space: 5 }) {
+        Text(songInfo.name)
+          .fontSize(16)
+          .width(275)
+          .fontWeight(FontWeight.Bold)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+
+        Row({ space: 5 }) {
+          Row() {
+            Text('超清母带').fontSize(10).fontColor('#C9963D')
+          }
+          .border({ color: '#C9963D', radius: 2, width: 1 })
+
+
+          Text(songInfo.artist)
+            .fontSize(13)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#858189')
+        }
+
+      }.margin({ left: 8 })
+      .alignItems(HorizontalAlign.Start)
+      .width(0)
+      .layoutWeight(1)
+
+      Image($rawfile((this.likeList.some(song => song.id === songInfo.id) && this.likeList) ? 'like.png' :
+        'unlike.png'))
+        .width(20)
+        .height(20)
+        .alignSelf(ItemAlign.Center)
+        .draggable(false)
+        .onClick(() => {
+          SongUtils.likeSong(songInfo, this.likeList)
+        })
+
+    }.width('100%')
+    .onClick(() => {
+      getInternetImgColor(songInfo.pic).then((color) => {
+
+        songInfo.backgroundColor = color
+        AppStorage.setOrCreate('nowSong', songInfo)
+        AppStorage.setOrCreate('isExpanded', true)
+        AppStorage.setOrCreate('geDan', this.searchFinalList)
+        CommonUtils.postEvent(EventContanst.songWords, '', 'next')
+        SharePreferenceUtil.getInstance().putString('lastSong', JSON.stringify(songInfo))
+        setTimeout(() => {
+          AppStorage.setOrCreate('isExpanded', false)
+        }, 5000)
+
+        AVPlayerUtils.getInstance().play(songInfo.url)
+
+      })
+    })
   }
 }
 
