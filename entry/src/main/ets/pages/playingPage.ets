@@ -19,6 +19,7 @@ export struct playingPage {
   private listController = new ListScroller()
   @StorageLink('geDan') geDanSongArray: songBean[] = []
   @StorageLink('likeList') likeList: songBean[] = []
+  @Prop isManYou: boolean
 
   aboutToAppear(): void {
     CommonUtils.handleEvent(EventContanst.songWords, (result: Record<string, string>) => {
@@ -30,6 +31,14 @@ export struct playingPage {
     CommonUtils.handleEvent(EventContanst.isFinish, (result: Record<string, string>) => {
       AVPlayerUtils.getInstance().qieGe(true, this.geDanSongArray, this.nowSong, false)
     })
+    //TODO 后续增加漫游歌单
+    if (this.isManYou) {
+      if (!this.isPlaying) {
+        this.isPlaying = true
+        AVPlayerUtils.getInstance().play(this.nowSong.url)
+      }
+
+    }
 
   }
 
@@ -175,7 +184,7 @@ export struct playingPage {
             'unlike.png'))
             .width(27).height(27).draggable(false)
             .onClick(() => {
-             SongUtils.likeSong(this.nowSong,this.likeList)
+              SongUtils.likeSong(this.nowSong, this.likeList)
             })
 
           Image($rawfile("shangyiqu.png")).width(30).height(30).draggable(false)

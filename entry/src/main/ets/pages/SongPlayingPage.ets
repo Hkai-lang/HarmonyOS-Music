@@ -18,7 +18,7 @@ export struct SongPlayingPage {
   private swiperController: SwiperController = new SwiperController();
   @StorageLink('wordMap') wordMap: Map<string, string> = new Map()
   @StorageLink('lyricsList') lyricsList: string [] = [] // 用于存储歌词的数组
-
+  @State isManYou: boolean = false
 
   registerCallback() {
     CustomTransitionUtils.getInstance().registerNavParam(this.pageId,
@@ -65,6 +65,7 @@ export struct SongPlayingPage {
           playingPage({
             pageInfo: this.pageInfo,
             lyricsList: this.lyricsList,
+            isManYou: this.isManYou
           })
           SongWordsPage({
             lyricsList: this.lyricsList
@@ -111,6 +112,8 @@ export struct SongPlayingPage {
         // 页面创建时注册自定义转场动画参数
         this.registerCallback();
       }
+      let param: object = this.pageInfo.getParamByName('songPlayingPage')[0] as object
+      this.isManYou = param['isManYou']
     })
     .onDisAppear(() => {
       // 页面销毁时解注册自定义转场动画参数

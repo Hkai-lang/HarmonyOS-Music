@@ -139,7 +139,7 @@ struct MainPage {
 
   getBarData() {
     const home: barItemBean = new barItemBean('shouYe.png', 'shouYeSelected.png', '首页')
-    const search: barItemBean = new barItemBean('search.png', 'searchSelected.png', '搜索')
+    const search: barItemBean = new barItemBean('search.png', 'searchSelected.png', '漫游')
     const mine: barItemBean = new barItemBean('mine.png', 'mineSelected.png', '我的')
     this.barArray.push(home, search, mine)
   }
@@ -349,9 +349,10 @@ struct MainPage {
                   songArray: this.songArray,
                   imgBannerArray: this.imgBannerArray,
                   songTop: this.songTop,
-                  songListRe:this.songListRe
+                  songListRe: this.songListRe
                 })
               } else if (index === 1) {
+
                 // SearchPage()
               } else if (index === 2) {
                 MinePage()
@@ -412,7 +413,9 @@ struct MainPage {
               this.downWithAnimation()
               this.hideWithAnimation()
               setTimeout(() => {
-                this.pageInfo.pushPath({ name: 'songPlayingPage' })
+                let param: object = new Object()
+                param['isManYou'] = false
+                this.pageInfo.pushPath({ name: 'songPlayingPage',param:param })
 
               }, 100)
             })
@@ -460,7 +463,26 @@ struct MainPage {
         .fontColor(index === this.selectedIndex ? Color.Black : Color.Gray)
         .fontSize(13)
     }.onClick(() => {
-      this.currentIndex = index
+
+      if (index === 0 || index === 2) {
+        this.currentIndex = index
+
+      } else {
+        this.allDown = true
+        if (this.isExpanded) {
+          this.isExpanded = false
+        }
+        this.downWithAnimation()
+        this.hideWithAnimation()
+        setTimeout(() => {
+          let param: object = new Object()
+          param['isManYou'] = true
+          this.pageInfo.pushPath({ name: 'songPlayingPage', param: param })
+
+        }, 100)
+      }
+
+
     })
     .margin({ bottom: 10 })
   }
