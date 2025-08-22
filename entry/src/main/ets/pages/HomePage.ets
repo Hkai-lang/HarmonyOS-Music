@@ -16,6 +16,7 @@ import hilog from "@ohos.hilog";
 import { SharePreferenceUtil } from "../utils/SharePreferenceUtil";
 import { BusinessError } from "@kit.BasicServicesKit";
 import { AVPlayerUtils } from "../utils/AVPlayerUtils";
+import { SongUtils } from "../utils/SongUtils";
 
 
 @Component
@@ -32,6 +33,7 @@ export struct HomePage {
   listController: ListScroller = new ListScroller();
   @Prop songTop: Map<string, songBean[]>
   @Prop songListRe: Map<string, songBean[]>
+  @StorageLink('nearList') nearList: songBean[] = []
 
   aboutToAppear(): void {
 
@@ -74,20 +76,20 @@ export struct HomePage {
           .margin({ left: 10 })
           .draggable(false)
 
-      Text('输入歌曲名或歌手')
-        .backgroundColor('#FEFEFF')
-        .width('70%')
-        .textAlign(TextAlign.Center)
+        Text('输入歌曲名或歌手')
+          .backgroundColor('#FEFEFF')
+          .width('70%')
+          .textAlign(TextAlign.Center)
 
 
-
-      }.width('80%')
+      }
+      .width('80%')
       .height(40)
       .borderRadius(25)
       .backgroundColor('#FEFEFF')
       .margin({ top: 50 })
-      .onClick(()=>{
-        this.pageInfo.pushPathByName('SearchPage',null)
+      .onClick(() => {
+        this.pageInfo.pushPathByName('SearchPage', null)
         AppStorage.setOrCreate('isSongList', true)
         CommonUtils.postEvent(EventContanst.showBar, '', 'false')
       })
@@ -202,7 +204,7 @@ export struct HomePage {
                     let param: object = new Object()
                     let list: songBean[] = this.songListRe.get(item.name)!
 
-                    if (list){
+                    if (list) {
                       getInternetImgColor(list[0].pic).then((color) => {
                         list[0].backgroundColor = color
                         param['list'] = list
@@ -287,6 +289,7 @@ export struct HomePage {
               AppStorage.setOrCreate('nowSong', item)
               AppStorage.setOrCreate('isExpanded', true)
               AppStorage.setOrCreate('geDan', songList)
+              SongUtils.zuiJin(item,this.nearList)
               CommonUtils.postEvent(EventContanst.songWords, '', 'next')
               SharePreferenceUtil.getInstance().putString('lastSong', JSON.stringify(item))
               setTimeout(() => {

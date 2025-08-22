@@ -19,4 +19,12 @@ export class SongUtils {
     SharePreferenceUtil.getInstance().putSongBeans('likeList', list)
   }
 
+  //添加最近
+  public static zuiJin(songInfo: songBean, list: songBean[]) {
+    if (!list.some(song => song.id === songInfo.id)) {
+      list.push(songInfo)
+    }
+    AppStorage.setOrCreate('nearList', list)
+    SharePreferenceUtil.getInstance().putSongBeans('nearList', list)
+  }
 }

@@ -20,6 +20,7 @@ export struct GeDanPage {
   @StorageLink('isPlaying') isPlaying: boolean = false
   @StorageLink('nowSong') nowSong: songBean = new songBean()
   @StorageLink('likeList') likeList: songBean[] = []
+  @StorageLink('nearList') nearList: songBean[] = []
 
   registerCallback() {
     CustomTransitionUtils.getInstance().registerNavParam(this.pageId,
@@ -88,6 +89,7 @@ export struct GeDanPage {
                       hilog.debug(1,'wyp','歌单换歌')
                       data.backgroundColor = color
                       AppStorage.setOrCreate('nowSong', data)
+                      SongUtils.zuiJin(data,this.nearList)
                       SharePreferenceUtil.getInstance().putString('lastSong', JSON.stringify(data))
                       CommonUtils.postEvent(EventContanst.songWords,'','next')
                       AVPlayerUtils.getInstance().play(data.url)

@@ -17,6 +17,7 @@ export struct songListPage2 {
   @State private downOpacityValue: number = 0;
   @State songList: songBean[] = []
   @StorageLink('likeList') likeList: songBean[] = []
+  @StorageLink('nearList') nearList: songBean[] = []
 
   aboutToAppear(): void {
 
@@ -217,6 +218,7 @@ export struct songListPage2 {
 
         songInfo.backgroundColor = color
         AppStorage.setOrCreate('nowSong', songInfo)
+        SongUtils.zuiJin(songInfo,this.nearList)
         AppStorage.setOrCreate('isExpanded', true)
         AppStorage.setOrCreate('geDan', this.songList)
         CommonUtils.postEvent(EventContanst.songWords, '', 'next')

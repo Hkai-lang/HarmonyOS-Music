@@ -18,7 +18,7 @@ import { image } from '@kit.ImageKit';
 import { ColorHsv, ColorRgb, ColorUtils } from './ColorUtils';
 import { http } from '@kit.NetworkKit';
 import { BusinessError, request } from '@kit.BasicServicesKit';
-import File from '@system.file';
+
 import fs from '@ohos.file.fs';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { common } from '@kit.AbilityKit';

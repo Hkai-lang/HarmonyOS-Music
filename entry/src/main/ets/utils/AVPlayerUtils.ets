@@ -203,7 +203,9 @@ export class AVPlayerUtils {
 
   // 切换音频
   async reset(): Promise<void> {
-    if (!this.avPlayer) return;
+    if (!this.avPlayer) {
+      return;
+    }
 
     try {
       // 移除所有事件监听器，避免内存泄漏
@@ -258,12 +260,12 @@ export class AVPlayerUtils {
   }
 
 
-  qieGe(isNext: boolean ,geDanSongArray:songBean[],nowSong:songBean,isDebounce:boolean) {
+  qieGe(isNext: boolean, geDanSongArray: songBean[], nowSong: songBean, isDebounce: boolean) {
     if (geDanSongArray.length > 0) {
       if (DebounceSingletonUtil.getInstance().isDebounced('防抖', 500) && isDebounce) {
         CommonUtils.toastShow('点击太快了哦～')
         return
-      }else {
+      } else {
         let index = geDanSongArray.findIndex(song => song.id === nowSong.id)
         if (isNext) {
           if (index === geDanSongArray.length - 1) {
@@ -282,7 +284,7 @@ export class AVPlayerUtils {
 
         getInternetImgColor(nowSong.pic).then((color) => {
           nowSong.backgroundColor = color
-          AppStorage.setOrCreate('nowSong',nowSong)
+          AppStorage.setOrCreate('nowSong', nowSong)
           CommonUtils.postEvent(EventContanst.songWords, '', 'next')
           AVPlayerUtils.getInstance().play(nowSong.url)
         })
@@ -296,13 +298,13 @@ export class AVPlayerUtils {
 
 
   // 更新歌词显示，根据当前时间匹配歌词
-  updateCurrentLyric(wordMap: Map<string, string>,songPlayingTime: number,lyricItemHeight: number) {
+  updateCurrentLyric(wordMap: Map<string, string>, songPlayingTime: number, lyricItemHeight: number) {
     let count = 0
     if (wordMap) {
-        wordMap.forEach((key: string, value: string) => {
+      wordMap.forEach((key: string, value: string) => {
         let currentTime = CommonUtils.convertMillisecondsToTime(songPlayingTime)
         if (currentTime === value.slice(0, 5)) {
-           let currentLyricIndex = count
+          let currentLyricIndex = count
           // 计算滚动位置，使当前歌词不在最上方（例如：保留前 2 行）
           const offsetLines = 2; // 希望保留的已播放行数
           const yOffset = Math.max(0, (currentLyricIndex - offsetLines) * lyricItemHeight);
@@ -310,7 +312,7 @@ export class AVPlayerUtils {
           let yOffsetSmall = currentLyricIndex * lyricItemHeight;
           AppStorage.setOrCreate('updateSongWords', yOffsetSmall)
           AppStorage.setOrCreate('yOffset', yOffset)
-          hilog.debug(1,'wyp111','更新歌词yOffset : '+yOffset)
+          hilog.debug(1, 'wyp111', '更新歌词yOffset : ' + yOffset)
           AppStorage.setOrCreate('currentLyricIndex', currentLyricIndex)
           CommonUtils.postEvent(EventContanst.songWords, '', 'update')
           // this.listController.scrollTo({ xOffset: 0, yOffset: yOffset, animation: true }); // smooth 表示平滑滚动
@@ -319,6 +321,4 @@ export class AVPlayerUtils {
       })
     }
   }
-
-
 }

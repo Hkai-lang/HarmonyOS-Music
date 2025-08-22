@@ -35,6 +35,7 @@ export struct SearchPage {
   @State isGoToResult: boolean = false
   @State count: number = 0 //标记是否是第一次进入
   @State isVis: Visibility = Visibility.None
+  @StorageLink('nearList') nearList: songBean[] = []
 
   aboutToAppear(): void {
     this.searchTxArray = SharePreferenceUtil.getInstance().getArrayString('searchTxArray')
@@ -516,6 +517,7 @@ export struct SearchPage {
 
         songInfo.backgroundColor = color
         AppStorage.setOrCreate('nowSong', songInfo)
+        SongUtils.zuiJin(songInfo,this.nearList)
         AppStorage.setOrCreate('isExpanded', true)
         AppStorage.setOrCreate('geDan', this.searchFinalList)
         CommonUtils.postEvent(EventContanst.songWords, '', 'next')

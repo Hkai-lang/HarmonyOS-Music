@@ -52,6 +52,7 @@ struct MainPage {
   @State songTop: Map<string, songBean[]> = new Map() // 每日推荐，热歌速递，私人雷达，新歌首发
   @StorageLink('isSongList') isSongList: boolean = false
   @State songListRe: Map<string, songBean[]> = new Map() //感兴趣歌手歌单
+  @StorageLink('nearList') nearList: songBean[] = []
 
   aboutToAppear(): void {
     this.getBarData()
@@ -66,6 +67,8 @@ struct MainPage {
       this.nowSong = JSON.parse(SharePreferenceUtil.getInstance().getString('lastSong'))
     }
     this.likeList = SharePreferenceUtil.getInstance().getSongBeans('likeList')
+    this.nearList = SharePreferenceUtil.getInstance().getSongBeans('nearList')
+
     this.getSongWords()
 
     CommonUtils.handleEvent(EventContanst.showBar, (result: Record<string, string>) => {
@@ -248,6 +251,7 @@ struct MainPage {
       clearInterval(this.intervalId);
     }
     SharePreferenceUtil.getInstance().putObjectArray('likeList', this.likeList)
+    SharePreferenceUtil.getInstance().putObjectArray('nearList', this.nearList)
   }
 
   // 显示动画（向上滑入）
@@ -415,7 +419,7 @@ struct MainPage {
               setTimeout(() => {
                 let param: object = new Object()
                 param['isManYou'] = false
-                this.pageInfo.pushPath({ name: 'songPlayingPage',param:param })
+                this.pageInfo.pushPath({ name: 'songPlayingPage', param: param })
 
               }, 100)
             })

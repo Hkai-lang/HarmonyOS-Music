@@ -8,6 +8,7 @@ import { getInternetImgColor } from "../utils/ImageUtils"
 import { EventContanst } from "../utils/EventContanst"
 import { SharePreferenceUtil } from "../utils/SharePreferenceUtil"
 import { AVPlayerUtils } from "../utils/AVPlayerUtils"
+import { SongUtils } from "../utils/SongUtils"
 
 
 @Component
@@ -19,6 +20,7 @@ export struct songListPage {
   @State content: string = ''
   @State auth: string = ''
   @StorageLink('nowSong') nowSong: songBean = new songBean()
+  @StorageLink('nearList') nearList: songBean[] = []
 
   aboutToAppear(): void {
     // CommonUtils.setStatusBarColor('#F0F5F6',getContext(this))
@@ -96,6 +98,7 @@ export struct songListPage {
 
                       this.songList[0].backgroundColor = color
                       AppStorage.setOrCreate('nowSong', this.songList[0])
+                      SongUtils.zuiJin(this.songList[0],this.nearList)
                       AppStorage.setOrCreate('isExpanded', true)
                       AppStorage.setOrCreate('geDan', this.songList)
                       CommonUtils.postEvent(EventContanst.songWords, '', 'next')
@@ -132,6 +135,7 @@ export struct songListPage {
 
                     item.backgroundColor = color
                     AppStorage.setOrCreate('nowSong', item)
+                    SongUtils.zuiJin(item,this.nearList)
                     AppStorage.setOrCreate('isExpanded', true)
                     AppStorage.setOrCreate('geDan', this.songList)
                     CommonUtils.postEvent(EventContanst.songWords, '', 'next')
